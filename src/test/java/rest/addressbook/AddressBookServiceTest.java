@@ -43,6 +43,11 @@ public class AddressBookServiceTest {
 		assertEquals(0, response.readEntity(AddressBook.class).getPersonList()
 				.size());
 
+		
+		// Must be extended in order to verify that GET /contacts meets the HTTP 
+		// contract: it is safe (it does not modify the contents of the address 
+		// book) and idempotent (two consecutive calls returns the same).
+		
 		//////////////////////////////////////////////////////////////////////
 		// Verify that GET /contacts is well implemented by the service, i.e
 		// test that it is safe and idempotent
