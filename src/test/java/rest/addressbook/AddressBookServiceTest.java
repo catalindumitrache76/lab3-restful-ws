@@ -5,6 +5,7 @@ import org.glassfish.jersey.grizzly2.httpserver.GrizzlyHttpServerFactory;
 import org.junit.After;
 import org.junit.Test;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.net.URI;
 import java.util.Collection;
@@ -43,6 +44,7 @@ public class AddressBookServiceTest {
 
 		// Request the address book
 		Client client = ClientBuilder.newClient();
+		
 		Response response1 = client.target("http://localhost:8282/contacts").
 				request().get();
 		Response response2 = client.target("http://localhost:8282/contacts").
@@ -51,28 +53,21 @@ public class AddressBookServiceTest {
 				request().get();
 		Response response4 = client.target("http://localhost:8282/contacts").
 				request().get();
-		boolean entityBuffer = response1.bufferEntity();
-		AddressBook adEntity = response1.readEntity(AddressBook.class);
-		List<Person> people = adEntity.getPersonList();
-		
-		// Check that it returns 200 and the data is correct.
-		assertEquals(200, response1.getStatus());
-		assertEquals(0, people.size());
-		
-		System.out.println("Entity buffer:");
-		System.out.println(entityBuffer);
-		System.out.println("------------------------------------------------" + 
-				"------------------");
 		
 		/**
-		 * Checking idempotency for 3 get requests
+		 * Checking idempotency for 4 get requests
 		 */
-		List<Person> people1 = people(response2);
-		List<Person> people2 = people(response3);
-		List<Person> people3 = people(response4);
+		people(response1);
+		people(response2);
+		people(response3);
+		people(response4);
 		
-		assertEquals(people1.size(),people2.size());
-		assertEquals(people1.size(),people3.size());
+		/**
+		 * Checking security for 4 get requests 
+		 */
+		assertEquals(response1.getLastModified(),response2.getLastModified());
+		assertEquals(response1.getLastModified(),response3.getLastModified());
+		assertEquals(response1.getLastModified(),response4.getLastModified());
 		
 		
 		/**
@@ -174,16 +169,18 @@ public class AddressBookServiceTest {
 		
 		
 		//////////////////////////////////////////////////////////////////////
-		// Test that GET /contacts is safe and idempotent
+		// Test that GET /contacts is safe 
 		//////////////////////////////////////////////////////////////////////	
 	}
 	
 	
-	private List<Person> people(Response response) {
+	private void people(Response response) {
+		
+		// Check that it returns 200 and the data is correct.
 		assertEquals(200, response.getStatus());
 		AddressBook adEntity = response.readEntity(AddressBook.class);
 		List<Person> people = adEntity.getPersonList();
-		return people;
+		assertEquals(0, people.size());
 	}
 	
 	
