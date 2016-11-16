@@ -43,13 +43,13 @@ public class AddressBookServiceTest {
 
 		// Request the address book
 		Client client = ClientBuilder.newClient();
-		Response response1 = client.target("http://localhost:8080/contacts").
+		Response response1 = client.target("http://localhost:8282/contacts").
 				request().get();
-		Response response2 = client.target("http://localhost:8080/contacts").
+		Response response2 = client.target("http://localhost:8282/contacts").
 				request().get();
-		Response response3 = client.target("http://localhost:8080/contacts").
+		Response response3 = client.target("http://localhost:8282/contacts").
 				request().get();
-		Response response4 = client.target("http://localhost:8080/contacts").
+		Response response4 = client.target("http://localhost:8282/contacts").
 				request().get();
 		boolean entityBuffer = response1.bufferEntity();
 		AddressBook adEntity = response1.readEntity(AddressBook.class);
@@ -57,14 +57,7 @@ public class AddressBookServiceTest {
 		
 		// Check that it returns 200 and the data is correct.
 		assertEquals(200, response1.getStatus());
-		assertEquals(2, people.size());
-		Iterator<Person> itPeople = people.iterator();
-		Person p1 = itPeople.next();
-		Person p2 = itPeople.next();
-		assertEquals(1,p1.getId());
-		assertEquals("Salvador",p1.getName());
-		assertEquals(2,p2.getId());
-		assertEquals("Juan",p2.getName());	
+		assertEquals(0, people.size());
 		
 		System.out.println("Entity buffer:");
 		System.out.println(entityBuffer);
@@ -81,29 +74,16 @@ public class AddressBookServiceTest {
 		assertEquals(people1.size(),people2.size());
 		assertEquals(people1.size(),people3.size());
 		
-		Iterator<Person> people1Iterator = people1.iterator();
-		Iterator<Person> people2Iterator = people2.iterator();
-		Iterator<Person> people3Iterator = people3.iterator();
-		
-		for (int i = 0; i < people1.size(); i++){
-			Person person1 = people1Iterator.next();
-			Person person2 = people2Iterator.next();
-			Person person3 = people3Iterator.next();
-			assertEquals(person1.getId(),person2.getId());
-			assertEquals(person1.getName(),person2.getName());
-			assertEquals(person1.getId(),person3.getId());
-			assertEquals(person1.getName(),person3.getName());
-		}
 		
 		/**
 		 *  These parts are extras. I was just checking them out
 		 */
-		Configuration config = client.target("http://localhost:8080/contacts").
+		Configuration config = client.target("http://localhost:8282/contacts").
 				getConfiguration();
 		Configuration clientConfig = client.getConfiguration();
 		
 		System.out.println("A continuación imprimo las propiedades" + 
-				" de localhost:8080/contacts:");
+				" de localhost:8282/contacts:");
 		Map<String, Object> configMap = config.getProperties();
 		Iterator<String> configKeyIterator = configMap.keySet().iterator();
 		String ckey = "";
@@ -134,7 +114,7 @@ public class AddressBookServiceTest {
 		
 		
 		System.out.println("A continuación imprimo los nombres de las "
-				+ "propiedades de localhost:8080/contacts:");
+				+ "propiedades de localhost:8282/contacts:");
 		Collection<String> configNames = config.getPropertyNames();
 		Iterator<String> configNameKeyIterator = configNames.iterator();
 		String cNkey = "";
@@ -465,7 +445,7 @@ public class AddressBookServiceTest {
 	}
 
 	private void launchServer(AddressBook ab) throws IOException {
-		URI uri = UriBuilder.fromUri("http://localhost/").port(8080).build();
+		URI uri = UriBuilder.fromUri("http://localhost/").port(8282).build();
 		server = GrizzlyHttpServerFactory.createHttpServer(uri,
 				new ApplicationConfig(ab));
 		server.start();
