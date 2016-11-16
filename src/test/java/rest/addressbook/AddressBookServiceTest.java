@@ -465,7 +465,7 @@ public class AddressBookServiceTest {
 	}
 
 	private void launchServer(AddressBook ab) throws IOException {
-		URI uri = UriBuilder.fromUri("http://localhost/").port(8282).build();
+		URI uri = UriBuilder.fromUri("http://localhost/").port(8080).build();
 		server = GrizzlyHttpServerFactory.createHttpServer(uri,
 				new ApplicationConfig(ab));
 		server.start();
