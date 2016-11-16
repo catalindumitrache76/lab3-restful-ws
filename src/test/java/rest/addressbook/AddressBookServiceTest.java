@@ -5,7 +5,6 @@ import org.glassfish.jersey.grizzly2.httpserver.GrizzlyHttpServerFactory;
 import org.junit.After;
 import org.junit.Test;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.net.URI;
 import java.util.Collection;
@@ -27,6 +26,7 @@ import rest.addressbook.domain.AddressBook;
 import rest.addressbook.domain.Person;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
 
 /**
  * A simple test suite
@@ -62,6 +62,7 @@ public class AddressBookServiceTest {
 		people(response3);
 		people(response4);
 		
+		
 		/**
 		 * Checking security for 4 get requests 
 		 */
@@ -69,10 +70,23 @@ public class AddressBookServiceTest {
 		assertEquals(response1.getLastModified(),response3.getLastModified());
 		assertEquals(response1.getLastModified(),response4.getLastModified());
 		
+	}
+	
+	private void people(Response response) {
 		
-		/**
-		 *  These parts are extras. I was just checking them out
-		 */
+		// Check that it returns 200 and the data is correct.
+		assertEquals(200, response.getStatus());
+		AddressBook adEntity = response.readEntity(AddressBook.class);
+		List<Person> people = adEntity.getPersonList();
+		assertEquals(0, people.size());
+		assertEquals(1,adEntity.getNextId());
+	}
+	
+	/**
+	 *  Extra method. I was just checking all these options out
+	 */
+	private void pruebas (Client client, Response response1){
+		
 		Configuration config = client.target("http://localhost:8282/contacts").
 				getConfiguration();
 		Configuration clientConfig = client.getConfiguration();
@@ -167,21 +181,8 @@ public class AddressBookServiceTest {
 		System.out.println("------------------------------------------------" + 
 				"------------------");
 		
-		
-		//////////////////////////////////////////////////////////////////////
-		// Test that GET /contacts is safe 
-		//////////////////////////////////////////////////////////////////////	
 	}
 	
-	
-	private void people(Response response) {
-		
-		// Check that it returns 200 and the data is correct.
-		assertEquals(200, response.getStatus());
-		AddressBook adEntity = response.readEntity(AddressBook.class);
-		List<Person> people = adEntity.getPersonList();
-		assertEquals(0, people.size());
-	}
 	
 	
 	@Test
@@ -195,12 +196,39 @@ public class AddressBookServiceTest {
 		juan.setName("Juan");
 		URI juanURI = URI.create("http://localhost:8282/contacts/person/1");
 
+
 		// Create a new user
 		Client client = ClientBuilder.newClient();
-		Response response = client.target("http://localhost:8282/contacts")
-				.request(MediaType.APPLICATION_JSON)
-				.post(Entity.entity(juan, MediaType.APPLICATION_JSON));
 
+		// Check the list before
+		Response responseBefore = client.
+				target("http://localhost:8282/contacts/").
+				request(MediaType.APPLICATION_JSON).get();
+		assertEquals(200, responseBefore.getStatus());
+		assertEquals(MediaType.APPLICATION_JSON_TYPE, responseBefore.
+				getMediaType());
+		AddressBook before = responseBefore.readEntity(AddressBook.class);
+		int sizeBefore = before.getPersonList().size();
+
+		//POST:
+		Response response = client.target("http://localhost:8282/contacts").
+				request(MediaType.APPLICATION_JSON).
+				post(Entity.entity(juan, MediaType.APPLICATION_JSON));
+		
+		// Check the list before
+		Response responseAfter = client.
+				target("http://localhost:8282/contacts/").
+				request(MediaType.APPLICATION_JSON).get();
+		assertEquals(200, responseAfter.getStatus());
+		assertEquals(MediaType.APPLICATION_JSON_TYPE, responseAfter.
+				getMediaType());
+		AddressBook after = responseAfter.readEntity(AddressBook.class);
+		int sizeAfter = after.getPersonList().size();
+		
+		// Proves that POST is not secure by showing that a resource has been 
+		// modified (the getPersonList list)
+		assertNotEquals(sizeBefore,sizeAfter);
+		
 		assertEquals(201, response.getStatus());
 		assertEquals(juanURI, response.getLocation());
 		assertEquals(MediaType.APPLICATION_JSON_TYPE, response.getMediaType());
@@ -210,8 +238,8 @@ public class AddressBookServiceTest {
 		assertEquals(juanURI, juanUpdated.getHref());
 
 		// Check that the new user exists
-		response = client.target("http://localhost:8282/contacts/person/1")
-				.request(MediaType.APPLICATION_JSON).get();
+		response = client.target("http://localhost:8282/contacts/person/1").
+				request(MediaType.APPLICATION_JSON).get();
 		assertEquals(200, response.getStatus());
 		assertEquals(MediaType.APPLICATION_JSON_TYPE, response.getMediaType());
 		juanUpdated = response.readEntity(Person.class);
@@ -219,11 +247,24 @@ public class AddressBookServiceTest {
 		assertEquals(1, juanUpdated.getId());
 		assertEquals(juanURI, juanUpdated.getHref());
 
-		//////////////////////////////////////////////////////////////////////
-		// Verify that POST /contacts is well implemented by the service, i.e
-		// test that it is not safe and not idempotent
-		//////////////////////////////////////////////////////////////////////	
-				
+		// Prove that idempotency is not satisfied in post method
+		Response response2 = client.target("http://localhost:8282/contacts").
+				request(MediaType.APPLICATION_JSON).
+				post(Entity.entity(juan, MediaType.APPLICATION_JSON));
+		// Resource created, but with another location
+		assertEquals (201,response2.getStatus());
+		assertNotEquals(juanURI,response2.getLocation());
+		
+	}
+	
+	private void people2(Response response) {
+		
+		// Check that it returns 200 and the data is correct.
+		assertEquals(200, response.getStatus());
+		AddressBook adEntity = response.readEntity(AddressBook.class);
+		List<Person> people = adEntity.getPersonList();
+		assertEquals(0, people.size());
+		assertEquals(1,adEntity.getNextId());
 	}
 
 	@Test
